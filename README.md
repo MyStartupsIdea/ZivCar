@@ -56,15 +56,16 @@ src/
     ├── listings.ts             # модель, хранилище, фильтры, избранное, хуки
     ├── image.ts                # сжатие фото на клиенте
     ├── format.ts               # цены, пробег, телефоны, даты
-    ├── supabase.ts             # заготовка серверного слоя (не подключена)
+    ├── supabase.ts             # клиент Supabase, включён при заданных переменных окружения
+    ├── listings-remote.ts      # чтение и запись объявлений в таблицу listings
     └── database.types.ts
 ```
 
 `src/lib/listings.ts` — единственная точка доступа к данным. При первом открытии в браузер
 записываются 18 демо-объявлений, дальше всё живёт в `localStorage`
-(`avto.listings.v2`, `avto.favorites.v1`). Чтобы подключить реальный бэкенд, достаточно
-заменить `getListings` / `createListing` / `updateListing` / `deleteListing` на вызовы API —
-интерфейс менять не придётся. SQL-схема Supabase (Postgres + Storage + RLS) лежит в
+(`avto.listings.v2`, `avto.favorites.v1`). Этот кэш остаётся источником истины для
+интерфейса, а при заданных переменных Supabase он синхронизируется с таблицей `listings`
+(см. раздел «Supabase»). SQL-схема (Postgres + Storage + RLS) лежит в
 `supabase/migrations/` и описана в `SUPABASE_SETUP.md`.
 
 ## Возможности системы
@@ -104,7 +105,9 @@ npx opennextjs-cloudflare build      # -> .open-next/worker.js
 
 Конфиги: `open-next.config.ts` (адаптер, R2-кэш), `wrangler.jsonc` (bindings),
 `postcss.config.mjs` (Tailwind v4). Каталоги `.open-next/` и `freebuff-sites-build/`
-— сгенерированные артефакты, в git не попадают.
+— сгенерированные артефакты, в git не попадают. Файлы `open-next.config.ts`,
+`freebuff.open-next.config.ts` и `freebuff.wrangler.jsonc` тоже генерируются
+Freebuff Sites при каждой публикации, поэтому `eslint` их не проверяет.
 
 ## Supabase
 
@@ -112,7 +115,12 @@ npx opennextjs-cloudflare build      # -> .open-next/worker.js
 Схема зафиксирована в `supabase/migrations/20260101000000_init.sql`, типы — в
 `src/lib/database.types.ts`.
 
-Переменные окружения (`.env.local`, в git не попадает):
+Переменные окружения (`.env.local`, в git не попадает) — имена и пример значений есть
+в закоммиченном `.env.example`, скопируйте его и подставьте свои:
+
+```bash
+cp .env.example .env.local
+```
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
